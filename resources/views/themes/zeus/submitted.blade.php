@@ -3,16 +3,17 @@
         <h2>{{ __('form submitted successfully') }}</h2>
     </x-slot>
     <x-slot name="breadcrumb"></x-slot>
-    <div class="max-w-4xl mx-auto">
-        <x-zeus::box class="mx-4">
-            @if(isset($form->options['confirmationMessage']) && !empty($form->options['confirmationMessage']))
-                {!! $form->options['confirmationMessage'] !!}
+    <div class="max-w-4xl mx-auto px-4">
+        <x-filament::card>
+            @if(isset($form->options['confirmation_message']) && !empty($form->options['confirmation_message']))
+                <span class="text-xs text-gray-400">
+                    {!! $form->options['confirmation_message'] !!}
+                </span>
             @else
                 <span class="text-xs text-gray-400">
-                the form {{ $form->name ?? '' }} submitted successfully.
-            </span>
-                <br>
+                    {{ __('the form') }} {{ $form->name ?? '' }} {{ __('submitted successfully') }}.
+                </span>
             @endif
-        </x-zeus::box>
+        </x-filament::card>
     </div>
 </div>

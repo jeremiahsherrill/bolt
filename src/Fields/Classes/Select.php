@@ -5,7 +5,6 @@ namespace LaraZeus\Bolt\Fields\Classes;
 use Filament\Forms\Components\Select as FilamentSelect;
 use Filament\Forms\Components\Toggle;
 use LaraZeus\Bolt\Fields\FieldsContract;
-use LaraZeus\Bolt\Models\Collection;
 
 class Select extends FieldsContract
 {
@@ -13,16 +12,19 @@ class Select extends FieldsContract
 
     public int $sort = 2;
 
-    public function title()
+    public function title(): string
     {
         return __('Select Menu');
     }
 
-    public static function getOptions()
+    public static function getOptions(): array
     {
         return [
-            FilamentSelect::make('options.dataSource')->required()->options(Collection::pluck('name', 'id'))->label(__('Data Source'))->columnSpan(2),
+            FilamentSelect::make('options.dataSource')->required()->options(config('zeus-bolt.models.Collection')::pluck('name', 'id'))->label(__('Data Source'))->columnSpan(2),
             Toggle::make('options.is_required')->label(__('Is Required')),
+            \Filament\Forms\Components\TextInput::make('options.htmlId')
+                ->default(str()->random(6))
+                ->label(__('HTML ID')),
         ];
     }
 
@@ -32,7 +34,7 @@ class Select extends FieldsContract
             return '';
         }
 
-        $collection = Collection::find($field->options['dataSource']);
+        $collection = config('zeus-bolt.models.Collection')::find($field->options['dataSource']);
         if ($collection === null) {
             return $resp->response;
         }
@@ -54,6 +56,8 @@ class Select extends FieldsContract
     {
         parent::appendFilamentComponentsOptions($component, $zeusField);
 
-        return $component->options(collect(Collection::find($zeusField->options['dataSource'])->values)->pluck('itemValue', 'itemKey'));
+        return $component
+            ->searchable()
+            ->options(collect(\optional(config('zeus-bolt.models.Collection')::find($zeusField->options['dataSource']))->values)->pluck('itemValue', 'itemKey'));
     }
 }

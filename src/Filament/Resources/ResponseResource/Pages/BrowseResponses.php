@@ -7,7 +7,6 @@ use Filament\Tables;
 use Illuminate\Database\Eloquent\Builder;
 use LaraZeus\Bolt\Filament\Resources\FormResource\Widgets\BetaNote;
 use LaraZeus\Bolt\Filament\Resources\ResponseResource;
-use LaraZeus\Bolt\Models\Response;
 
 class BrowseResponses extends Page implements Tables\Contracts\HasTable
 {
@@ -19,7 +18,10 @@ class BrowseResponses extends Page implements Tables\Contracts\HasTable
 
     protected static ?string $navigationIcon = 'heroicon-o-eye';
 
-    protected static ?string $title = 'Entries';
+    protected function getTitle(): string
+    {
+        return __('Browse Entries');
+    }
 
     protected function getHeaderWidgets(): array
     {
@@ -30,16 +32,7 @@ class BrowseResponses extends Page implements Tables\Contracts\HasTable
 
     protected function getTableQuery(): Builder
     {
-        return Response::query()->where('form_id', request('form_id'));
-    }
-
-    protected function getTableColumns(): array
-    {
-        return [
-            Tables\Columns\ViewColumn::make('response')
-                ->view('zeus-bolt::filament.resources.response-resource.components.view-responses')
-                ->label(''),
-        ];
+        return config('zeus-bolt.models.Response')::query()->where('form_id', request('form_id'));
     }
 
     protected function getViewData(): array
@@ -48,10 +41,9 @@ class BrowseResponses extends Page implements Tables\Contracts\HasTable
         if (request()->filled('form_id')) {
             $form = $form->where('form_id', request('form_id'));
         }
-        $form = $form->paginate(1);
 
         return [
-            'rows' => $form,
+            'rows' => $form->paginate(1),
         ];
     }
 }

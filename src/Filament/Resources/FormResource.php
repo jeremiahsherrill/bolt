@@ -5,7 +5,10 @@ namespace LaraZeus\Bolt\Filament\Resources;
 use Filament\Resources\Form;
 use Filament\Resources\Table;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Columns\BooleanColumn;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +22,11 @@ class FormResource extends BoltResource
     use Schemata;
 
     protected static ?string $model = ZeusForm::class;
+
+    public static function getModel(): string
+    {
+        return config('zeus-bolt.models.Form');
+    }
 
     protected static ?string $navigationIcon = 'clarity-form-line';
 
@@ -34,11 +42,6 @@ class FormResource extends BoltResource
     protected static function getNavigationBadge(): ?string
     {
         return (string) ZeusForm::query()->count();
-    }
-
-    protected static function getNavigationGroup(): ?string
-    {
-        return __('Bolt');
     }
 
     public static function getLabel(): string
@@ -67,26 +70,32 @@ class FormResource extends BoltResource
             ->columns([
                 TextColumn::make('name')->searchable()->sortable()->label(__('Form Name')),
                 TextColumn::make('category.name')->label(__('Category'))->sortable(),
-                BooleanColumn::make('is_active')->label(__('Is Active'))->sortable(),
+                IconColumn::make('is_active')->boolean()->label(__('Is Active'))->sortable(),
                 TextColumn::make('start_date')->dateTime()->searchable()->sortable()->label(__('Start Date')),
                 TextColumn::make('end_date')->dateTime()->searchable()->sortable()->label(__('End Date')),
-                BooleanColumn::make('responses_exists')->exists('responses')->label(__('Responses Exists'))->sortable(),
+                IconColumn::make('responses_exists')->boolean()->exists('responses')->label(__('Responses Exists'))->sortable(),
                 TextColumn::make('responses_count')->counts('responses')->label(__('Responses Count'))->sortable(),
             ])
-            ->appendActions([
-                Action::make('entries')
-                    ->label(__('Entries'))
-                    ->icon('clarity-data-cluster-line')
-                    ->tooltip(__('view all entries'))
-                    ->url(fn (ZeusForm $record): string => url('admin/responses?form_id=' . $record->id)),
-
-                Action::make('view')
-                    ->label(__('View'))
-                    ->icon('heroicon-o-external-link')
-                    ->tooltip(__('view form'))
-                    ->url(fn (ZeusForm $record): string => route('bolt.user.form.show', $record))
-                    ->openUrlInNewTab(),
-            ])->filters([
+            ->actions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make('edit'),
+                    Action::make('entries')
+                        ->color('success')
+                        ->label(__('Entries'))
+                        ->icon('clarity-data-cluster-line')
+                        ->tooltip(__('view all entries'))
+                        ->url(fn (ZeusForm $record): string => url('admin/responses?form_id=' . $record->id)),
+                    Action::make('show')
+                        ->color('warning')
+                        ->label(__('View Form'))
+                        ->icon('heroicon-o-external-link')
+                        ->tooltip(__('view form'))
+                        ->url(fn (ZeusForm $record): string => route('bolt.form.show', $record))
+                        ->openUrlInNewTab(),
+                ]),
+            ])
+            ->filters([
                 Filter::make('is_active')
                     ->toggle()
                     ->query(fn (Builder $query): Builder => $query->where('is_active', true))
@@ -100,6 +109,7 @@ class FormResource extends BoltResource
             'index' => Pages\ListForms::route('/'),
             'create' => Pages\CreateForm::route('/create'),
             'edit' => Pages\EditForm::route('/{record}/edit'),
+            'view' => Pages\ViewForm::route('/{record}'),
         ];
     }
 
@@ -107,6 +117,10 @@ class FormResource extends BoltResource
     {
         return [
             BetaNote::class,
+            FormResource\Widgets\FormOverview::class,
+            FormResource\Widgets\ResponsesPerMonth::class,
+            FormResource\Widgets\ResponsesPerStatus::class,
+            FormResource\Widgets\ResponsesPerFields::class,
         ];
     }
 }

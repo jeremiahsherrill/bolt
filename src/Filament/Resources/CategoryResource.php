@@ -12,18 +12,20 @@ use Filament\Resources\Table;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\BooleanColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Str;
 use LaraZeus\Bolt\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use LaraZeus\Bolt\Filament\Resources\CategoryResource\Pages\EditCategory;
 use LaraZeus\Bolt\Filament\Resources\CategoryResource\Pages\ListCategories;
-use LaraZeus\Bolt\Models\Category;
 
 class CategoryResource extends BoltResource
 {
-    protected static ?string $model = Category::class;
+    public static function getModel(): string
+    {
+        return config('zeus-bolt.models.Category');
+    }
 
     protected static ?string $navigationIcon = 'clarity-tags-line';
 
@@ -33,7 +35,7 @@ class CategoryResource extends BoltResource
 
     protected static function getNavigationBadge(): ?string
     {
-        return (string) Category::query()->count();
+        return (string) config('zeus-bolt.models.Category')::query()->count();
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -49,7 +51,7 @@ class CategoryResource extends BoltResource
                     ->required()
                     ->maxLength(255)
                     ->reactive()
-                    ->label(__('name'))
+                    ->label(__('Name'))
                     ->afterStateUpdated(function (Closure $set, $state, $context) {
                         if ($context === 'edit') {
                             return;
@@ -58,7 +60,7 @@ class CategoryResource extends BoltResource
                     }),
                 TextInput::make('slug')->required()->maxLength(255)->label(__('slug')),
                 TextInput::make('ordering')->required()->numeric()->label(__('ordering')),
-                Toggle::make('is_active')->label(__('is_active'))->default(1),
+                Toggle::make('is_active')->label(__('Is Active'))->default(1),
                 Textarea::make('desc')->maxLength(65535)->columnSpan(['sm' => 2])->label(__('Description')),
                 FileUpload::make('logo')
                     ->disk(config('zeus-bolt.uploads.disk', 'public'))
@@ -75,7 +77,10 @@ class CategoryResource extends BoltResource
                 ImageColumn::make('logo')->disk(config('zeus-bolt.uploads.disk', 'public'))->label(__('Logo')),
                 TextColumn::make('name')->label(__('Name'))->sortable()->searchable(),
                 TextColumn::make('desc')->label(__('Description')),
-                BooleanColumn::make('is_active')->sortable()->label(__('Is Active')),
+                IconColumn::make('is_active')
+                    ->boolean()
+                    ->sortable()
+                    ->label(__('Is Active')),
             ])
             ->reorderable('ordering')
             ->defaultSort('id', 'desc')
@@ -110,10 +115,5 @@ class CategoryResource extends BoltResource
     protected static function getNavigationLabel(): string
     {
         return __('Categories');
-    }
-
-    protected static function getNavigationGroup(): ?string
-    {
-        return __('Bolt');
     }
 }

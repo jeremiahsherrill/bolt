@@ -2,22 +2,143 @@
 
 All notable changes to `Bolt` will be documented in this file
 
+## 0.0.29 - 2023-06-05
+
+### What's Changed
+
+- add widgets
+- add view form page in admin
+- update readme and introduction to mark some features as done 💪
+- update docs to add events
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.28...0.0.29
+
+## 0.0.28 - 2023-06-04
+
+### What's Changed
+
+- updates by @atmonshi in https://github.com/lara-zeus/bolt/pull/44
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.27...0.0.28
+
+## 0.0.27 - 2023-06-02
+
+### What's Changed
+
+- update zeus-core by @atmonshi in https://github.com/lara-zeus/bolt/pull/43
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.26...0.0.27
+
+## 0.0.26 - 2023-06-02
+
+### What's Changed
+
+- Bump aglipanci/laravel-pint-action from 2.2.0 to 2.3.0 by @dependabot in https://github.com/lara-zeus/bolt/pull/41
+- Bump dependabot/fetch-metadata from 1.4.0 to 1.5.1 by @dependabot in https://github.com/lara-zeus/bolt/pull/42
+
+🆕 new form layout added: tabs
+🆕 allow setting columns number per section
+🆕 add section descriptions
+🆕 Set Section Icon available for Tabs and Wizerd
+🆕 Option to view the section as aside
+
+✨ Localized all phrases, currently supporting (English and Arabic)
+✨ Improve the overall UI for viewing the responses.
+✨ You can set the status for each response
+
+❗️removed the route group `user`
+⚠️ run `php artisan migrate` for the new migration: `add_fields_to_sections_table`
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.25...0.0.26
+
+## 0.0.25 - 2023-05-28
+
+### What's Changed
+
+- add ar phrases by @atmonshi in https://github.com/lara-zeus/bolt/pull/40
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.24...0.0.25
+
+## 0.0.24 - 2023-05-28
+
+### What's Changed
+
+- Config models by @atmonshi in https://github.com/lara-zeus/bolt/pull/39
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.23...0.0.24
+
+## 0.0.23 - 2023-05-28
+
+### What's Changed
+
+🔥 Adding `Filament Plugin Purge` for better and thinner CSS file.
+
+🚩 The component `<x-zeus::box>` is retired, and now we using `<x-filament::card>` instead.
+
+🟢 Always add `@php artisan vendor:publish --tag=zeus-assets --ansi --force` to `post-update-cmd` in your composer file.
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.22...0.0.23
+
+## 0.0.22 - 2023-05-28
+
+### What's Changed
+
+- Update core by @atmonshi in https://github.com/lara-zeus/bolt/pull/37
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.21...0.0.22
+
+## 0.0.21 - 2023-05-20
+
+### What's Changed
+
+- Bump dependabot/fetch-metadata from 1.3.6 to 1.4.0 by @dependabot in https://github.com/lara-zeus/bolt/pull/35
+- remove lang files for now
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.20...0.0.21
+
+## 0.0.20 - 2023-04-10
+
+### What's Changed
+
+- Bump dependabot/fetch-metadata from 1.3.3 to 1.3.4 by @dependabot in https://github.com/lara-zeus/bolt/pull/28
+- Bump dependabot/fetch-metadata from 1.3.4 to 1.3.5 by @dependabot in https://github.com/lara-zeus/bolt/pull/29
+- Bump dependabot/fetch-metadata from 1.3.5 to 1.3.6 by @dependabot in https://github.com/lara-zeus/bolt/pull/32
+- support laravel 10 by @atmonshi in https://github.com/lara-zeus/bolt/pull/34
+- Bump aglipanci/laravel-pint-action from 1.0.0 to 2.2.0 by @dependabot in https://github.com/lara-zeus/bolt/pull/33
+- Bump ramsey/composer-install from 1 to 2 by @dependabot in https://github.com/lara-zeus/bolt/pull/30
+
+### New Contributors
+
+- @dependabot made their first contribution in https://github.com/lara-zeus/bolt/pull/28
+
+**Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.19...0.0.20
+
 ## 0.0.19 - 2022-09-24
 
 ### What's Changed
 
 - Support ext by @atmonshi in https://github.com/lara-zeus/bolt/pull/26
+- 
 - composer core update by @atmonshi in https://github.com/lara-zeus/bolt/pull/27
-
+- 
 - add features and roadmap
+- 
 - add zeus render hooks
+- 
 - list all user entries and show entry details
+- 
 - small changes to the UI
+- 
 - refactor all fields classes
+- 
 - improvements in all resources
+- 
 - use the new table layout in forms and entries
+- 
 - refactor filling the form component
+- 
 - add form status sushi model
+- 
 
 **Full Changelog**: https://github.com/lara-zeus/bolt/compare/0.0.18...0.0.19
 
