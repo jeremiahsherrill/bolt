@@ -9,12 +9,14 @@ use LaraZeus\Bolt\Filament\Resources\CategoryResource;
 use LaraZeus\Bolt\Filament\Resources\CollectionResource;
 use LaraZeus\Bolt\Filament\Resources\FormResource;
 use LaraZeus\Core\Concerns\CanGloballySearch;
+use LaraZeus\Core\Concerns\HasRouteNamePrefix;
 
 final class BoltPlugin implements Plugin
 {
     use CanGloballySearch;
     use Configuration;
     use EvaluatesClosures;
+    use HasRouteNamePrefix;
 
     public array $defaultGloballySearchableAttributes = [
         CategoryResource::class => ['name', 'slug'],

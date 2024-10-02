@@ -43,7 +43,7 @@ class EditForm extends EditRecord
                 ->icon('heroicon-o-arrow-top-right-on-square')
                 ->tooltip(__('open form'))
                 ->color('warning')
-                ->url(fn () => route('bolt.form.show', $this->record))
+                ->url(fn () => route(BoltPlugin::get()->getRouteNamePrefix() . 'bolt.form.show', $this->record))
                 ->openUrlInNewTab(),
         ];
     }

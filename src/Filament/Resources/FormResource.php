@@ -98,7 +98,7 @@ class FormResource extends BoltResource
 
                     TextEntry::make('slug')
                         ->label(__('slug'))
-                        ->url(fn (ZeusForm $record) => route('bolt.form.show', ['slug' => $record->slug]))
+                        ->url(fn (ZeusForm $record) => route(BoltPlugin::get()->getRouteNamePrefix() . 'bolt.form.show', ['slug' => $record->slug]))
                         ->visible(fn (ZeusForm $record) => $record->extensions === null)
                         ->icon('heroicon-o-arrow-top-right-on-square')
                         ->openUrlInNewTab(),
@@ -268,7 +268,7 @@ class FormResource extends BoltResource
             //@phpstan-ignore-next-line
             $advancedActions[] = \LaraZeus\Helen\Actions\ShortUrlAction::make('get-link')
                 ->label(__('Short Link'))
-                ->distUrl(fn (ZeusForm $record) => route('bolt.form.show', $record));
+                ->distUrl(fn (ZeusForm $record) => route(BoltPlugin::get()->getRouteNamePrefix() . 'bolt.form.show', $record));
         }
 
         $moreActions[] = ActionGroup::make($advancedActions)->dropdown(false);
