@@ -5,6 +5,7 @@ namespace LaraZeus\Bolt\Filament\Resources\FormResource\Pages;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
+use LaraZeus\Bolt\BoltPlugin;
 use LaraZeus\Bolt\Facades\Bolt;
 use LaraZeus\Bolt\Filament\Resources\FormResource;
 
@@ -24,7 +25,7 @@ class ListForms extends ListRecords
                 ->icon('heroicon-o-arrow-top-right-on-square')
                 ->tooltip(__('open all forms'))
                 ->color('warning')
-                ->url(fn () => route('bolt.forms.list'))
+                ->url(fn () => route(BoltPlugin::get()->getRouteNamePrefix() . 'bolt.forms.list'))
                 ->openUrlInNewTab(),
         ];
 
