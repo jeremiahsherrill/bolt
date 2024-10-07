@@ -2,35 +2,64 @@
 
 namespace LaraZeus\Bolt\Filament\Resources\FormResource\Widgets;
 
-use Filament\Widgets\PieChartWidget;
-use Illuminate\Database\Eloquent\Model;
-use LaraZeus\Bolt\Models\FieldResponse;
+use Filament\Widgets\ChartWidget;
+use LaraZeus\Bolt\BoltPlugin;
+use LaraZeus\Bolt\Models\Form;
 
-class ResponsesPerFields extends PieChartWidget
+class ResponsesPerFields extends ChartWidget
 {
-    public ?Model $record = null;
-
-    protected int|string|array $columnSpan = [
-        'sm' => 1,
-    ];
+    public Form $record;
 
     protected static ?string $maxHeight = '300px';
 
-    protected function getHeading(): string
+    protected int | string | array $columnSpan = [
+        'lg' => 1,
+        'md' => 2,
+    ];
+
+    protected static ?array $options = [
+        'scales' => [
+            'y' => [
+                'grid' => [
+                    'display' => false,
+                ],
+                'ticks' => [
+                    'display' => false,
+                ],
+            ],
+            'x' => [
+                'grid' => [
+                    'display' => false,
+                ],
+                'ticks' => [
+                    'display' => false,
+                ],
+            ],
+        ],
+    ];
+
+    protected function getType(): string
     {
-        return __('Responses Status');
+        return 'pie';
+    }
+
+    public function getHeading(): string
+    {
+        return __('Responses Entries');
     }
 
     protected function getData(): array
     {
-        if ($this->record === null) {
-            return [];
-        }
+        $dataset = [];
 
-        $fields = $this->record->fields;
+        $form = BoltPlugin::getModel('Form')::query()
+            ->with(['fields', 'fieldsResponses'])
+            ->where('id', $this->record->id)
+            ->first();
+
+        $fields = $form->fields;
         foreach ($fields as $field) {
-            $dataset[] = FieldResponse::query()
-                ->where('form_id', $this->record->id)
+            $dataset[] = $form->fieldsResponses
                 ->where('field_id', $field->id)
                 ->count();
         }
@@ -40,6 +69,8 @@ class ResponsesPerFields extends PieChartWidget
                 [
                     'label' => __('entries per month'),
                     'data' => $dataset,
+                    'backgroundColor' => '#8A8AFF',
+                    'borderColor' => '#ffffff',
                 ],
             ],
 

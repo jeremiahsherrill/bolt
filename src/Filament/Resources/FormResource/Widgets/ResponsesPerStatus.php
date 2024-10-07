@@ -2,36 +2,59 @@
 
 namespace LaraZeus\Bolt\Filament\Resources\FormResource\Widgets;
 
-use Filament\Widgets\PieChartWidget;
-use Illuminate\Database\Eloquent\Model;
-use LaraZeus\Bolt\Models\FormsStatus;
-use LaraZeus\Bolt\Models\Response;
+use Filament\Widgets\ChartWidget;
+use LaraZeus\Bolt\BoltPlugin;
+use LaraZeus\Bolt\Models\Form;
 
-class ResponsesPerStatus extends PieChartWidget
+class ResponsesPerStatus extends ChartWidget
 {
-    public ?Model $record = null;
-
-    protected int|string|array $columnSpan = [
-        'sm' => 1,
-    ];
+    public Form $record;
 
     protected static ?string $maxHeight = '300px';
 
-    protected function getHeading(): string
+    protected static ?array $options = [
+        'scales' => [
+            'y' => [
+                'grid' => [
+                    'display' => false,
+                ],
+                'ticks' => [
+                    'display' => false,
+                ],
+            ],
+            'x' => [
+                'grid' => [
+                    'display' => false,
+                ],
+                'ticks' => [
+                    'display' => false,
+                ],
+            ],
+        ],
+    ];
+
+    protected int | string | array $columnSpan = [
+        'lg' => 1,
+        'md' => 2,
+    ];
+
+    public function getHeading(): string
     {
         return __('Responses Status');
     }
 
     protected function getData(): array
     {
-        if ($this->record === null) {
-            return [];
-        }
+        $dataset = [];
+        $statuses = BoltPlugin::getModel('FormsStatus')::get();
 
-        $statuses = FormsStatus::get();
+        $form = BoltPlugin::getModel('Form')::query()
+            ->with(['responses'])
+            ->where('id', $this->record->id)
+            ->first();
+
         foreach ($statuses as $status) {
-            $dataset[] = Response::query()
-                ->where('form_id', $this->record->id)
+            $dataset[] = $form->responses
                 ->where('status', $status->key)
                 ->count();
         }
@@ -48,5 +71,10 @@ class ResponsesPerStatus extends PieChartWidget
 
             'labels' => $statuses->pluck('label'),
         ];
+    }
+
+    protected function getType(): string
+    {
+        return 'pie';
     }
 }

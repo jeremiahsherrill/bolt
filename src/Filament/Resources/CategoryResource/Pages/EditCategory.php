@@ -2,9 +2,9 @@
 
 namespace LaraZeus\Bolt\Filament\Resources\CategoryResource\Pages;
 
+use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use LaraZeus\Bolt\Filament\Resources\CategoryResource;
-use LaraZeus\Bolt\Filament\Resources\FormResource\Widgets\BetaNote;
 
 class EditCategory extends EditRecord
 {
@@ -12,10 +12,10 @@ class EditCategory extends EditRecord
 
     protected static string $resource = CategoryResource::class;
 
-    protected function getHeaderWidgets(): array
+    protected function getHeaderActions(): array
     {
         return [
-            BetaNote::class,
+            Actions\LocaleSwitcher::make(),
         ];
     }
 }

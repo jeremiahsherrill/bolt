@@ -1,32 +1,25 @@
 <?php
 
-namespace Database\Factories;
+namespace LaraZeus\Bolt\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use LaraZeus\Bolt\BoltPlugin;
+use LaraZeus\Bolt\Models\Form;
 
 class FormFactory extends Factory
 {
-    public function getModel(): string
-    {
-        return config('zeus-bolt.models.Form');
-    }
+    protected $model = Form::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array
-     */
-    public function definition()
+    public function definition(): array
     {
         return [
             'name' => $this->faker->words(3, true),
-            'user_id' => config('auth.providers.users.model')::factory(),
-            'layout' => $this->faker->numberBetween(1, 2),
+            'user_id' => 1,
             'ordering' => $this->faker->numberBetween(1, 20),
-            'desc' => $this->faker->text(),
+            'description' => $this->faker->text(),
             'slug' => $this->faker->slug(),
             'is_active' => 1,
-            'category_id' => config('zeus-bolt.models.Category')::factory(),
+            'category_id' => BoltPlugin::getModel('Category')::factory(),
             'start_date' => $this->faker->dateTime(),
             'end_date' => $this->faker->dateTime(),
         ];

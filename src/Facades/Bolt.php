@@ -2,18 +2,19 @@
 
 namespace LaraZeus\Bolt\Facades;
 
-use Filament\Facades\Filament;
-use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
-use Illuminate\Support\Arr;
+use Filament\Forms\Components\Tabs\Tab;
+use Filament\Support\Facades\FilamentView;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Facade;
-use Symfony\Component\Finder\Finder;
+use LaraZeus\Accordion\Forms\Accordion;
+use LaraZeus\Bolt\BoltPlugin;
+use LaraZeus\Bolt\Contracts\CustomFormSchema;
+use LaraZeus\Bolt\Contracts\CustomSchema;
+use LaraZeus\Bolt\Fields\FieldsContract;
 
 class Bolt extends Facade
 {
@@ -22,141 +23,128 @@ class Bolt extends Facade
         return 'bolt';
     }
 
-    public static function availableFields()
+    public static function availableFields(): Collection
     {
         if (app()->isLocal()) {
             Cache::forget('bolt.fields');
         }
 
         return Cache::remember('bolt.fields', Carbon::parse('1 month'), function () {
-            $coreFields = Bolt::collectFields(__DIR__ . '/../Fields/Classes', 'LaraZeus\\Bolt\\Fields\\Classes\\');
-            $appFields = Bolt::collectFields(app_path('Zeus/Fields'), 'App\\Zeus\\Fields\\');
+            $coreFields = Collectors::collectClasses(__DIR__ . '/../Fields/Classes', 'LaraZeus\\Bolt\\Fields\\Classes\\');
+            $appFields = Collectors::collectClasses(base_path(config('zeus-bolt.collectors.fields.path')), config('zeus-bolt.collectors.fields.namespace'));
 
             $fields = collect();
 
-            if (! $coreFields->isEmpty()) {
+            if ($coreFields->isNotEmpty()) {
                 $fields = $fields->merge($coreFields);
             }
 
-            if (! $appFields->isEmpty()) {
+            if ($appFields->isNotEmpty()) {
                 $fields = $fields->merge($appFields);
+            }
+
+            if (static::hasPro()) {
+                $boltProFields = Collectors::collectClasses(
+                    base_path('vendor/lara-zeus/bolt-pro/src/Fields'),
+                    'LaraZeus\\BoltPro\\Fields\\'
+                );
+
+                if ($boltProFields->isNotEmpty()) {
+                    $fields = $fields->merge($boltProFields);
+                }
             }
 
             return $fields->sortBy('sort');
         });
     }
 
-    public static function collectFields($path, $namespace)
+    public static function availableDataSource(): Collection
     {
-        if (! is_dir($path)) {
-            return collect();
+        if (app()->isLocal()) {
+            Cache::forget('bolt.dataSources');
         }
-        $classes = Bolt::loadClasses($path, $namespace);
-        $allFields = Bolt::setFields($classes);
 
-        return collect($allFields);
+        return Cache::remember('bolt.dataSources', Carbon::parse('1 month'), function () {
+            return Collectors::collectClasses(
+                base_path(config('zeus-bolt.collectors.dataSources.path')),
+                config('zeus-bolt.collectors.dataSources.namespace')
+            )
+                ->sortBy('sort');
+        });
     }
 
-    protected static function setFields($classes)
+    public static function renderHook(string $hook): Placeholder
     {
-        $allFields = [];
-        foreach ($classes as $class) {
-            $fieldClass = new $class();
-            if (! $fieldClass->disabled) {
-                $allFields[] = $fieldClass->toArray();
-            }
-        }
+        $hookRendered = FilamentView::renderHook($hook);
 
-        return $allFields;
-    }
-
-    public static function loadClasses($path, $namespace)
-    {
-        $classes = [];
-        $path = array_unique(Arr::wrap($path));
-
-        foreach ((new Finder())->in($path)->files() as $className) {
-            $classes[] = $namespace . $className->getFilenameWithoutExtension();
-        }
-
-        return $classes;
-    }
-
-    public static function prepareFieldsAndSectionToRender($zeusForm, $item): array
-    {
-        $sections = [];
-        $zeusSections = $zeusForm->sections()->orderBy('ordering')->get();
-        $countSections = 0;
-        foreach ($zeusSections as $section) {
-            $countSections++;
-            $fields = [];
-
-            $fields[] = static::renderHook('zeus-form-section.before');
-
-            /*if ($item !== null && $countSections === 1) {
-                // todo adding title comment if there is an extension, extensions should define their own fields somehow
-                $fields[] = TextInput::make('itemData.title')->label(__('Ticket Title'))->required();
-            }*/
-
-            foreach ($section->fields()->orderBy('ordering')->get() as $zeusField) {
-                $fields[] = static::renderHook('zeus-form-field.before');
-
-                $fieldClass = new $zeusField->type;
-                $component = $fieldClass->renderClass::make('zeusData.' . $zeusField->id);
-
-                $fields[] = $fieldClass->appendFilamentComponentsOptions($component, $zeusField);
-
-                $fields[] = static::renderHook('zeus-form-field.after');
-            }
-
-            $fields[] = static::renderHook('zeus-form-section.after');
-
-            if (optional($zeusForm->options)['show-as'] === 'tabs') {
-                $sections[] = Tabs\Tab::make($section->name)
-                    ->icon($section->section_icon ?? null)
-                    ->schema([
-                        Card::make()->columns($section->section_column)->schema($fields),
-                    ]);
-            } elseif (optional($zeusForm->options)['show-as'] === 'wizard') {
-                $sections[] = Wizard\Step::make($section->name)
-                    ->description($section->section_descriptions)
-                    ->icon($section->section_icon ?? null)
-                    ->schema([
-                        Card::make()->columns($section->section_column)->schema($fields),
-                    ]);
-            } else {
-                $sections[] = Section::make($section->name)
-                    ->schema($fields)
-                    ->aside()
-                    ->aside(fn () => $section->section_aside)
-                    ->description($section->section_descriptions)
-                    ->columns($section->section_column);
-            }
-        }
-
-        if (optional($zeusForm->options)['show-as'] === 'tabs') {
-            return [Tabs::make('tabs')->tabs($sections)];
-        }
-
-        if (optional($zeusForm->options)['show-as'] === 'wizard') {
-            return [Wizard::make($sections)];
-        }
-
-        return $sections;
-    }
-
-    public static function renderHook($hook)
-    {
         return Placeholder::make('placeholder-' . $hook)
             ->label('')
-            ->content(Filament::renderHook($hook))
-            ->visible(! empty(Filament::renderHook($hook)->toHtml()));
+            ->content($hookRendered)
+            ->visible(filled($hookRendered->toHtml()));
     }
 
-    public static function renderHookBlade($hook)
+    public static function renderHookBlade(string $hook): ?Htmlable
     {
-        if (! empty(Filament::renderHook($hook)->toHtml())) {
-            return Filament::renderHook($hook);
+        $hookRendered = FilamentView::renderHook($hook);
+
+        if (filled($hookRendered->toHtml())) {
+            return $hookRendered;
         }
+
+        return null;
+    }
+
+    public static function isJson(string $string): bool
+    {
+        if ($string === '') {
+            return false;
+        }
+
+        /*if (is_int($string)) {
+            return false;
+        }*/
+
+        json_decode($string);
+
+        if (json_last_error()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function hasPro(): bool
+    {
+        return class_exists(\LaraZeus\BoltPro\BoltProServiceProvider::class);
+    }
+
+    public static function getCustomSchema(string $hook, ?FieldsContract $field = null): Tab | Accordion | null
+    {
+        $class = BoltPlugin::getSchema($hook);
+        if ($class !== null) {
+            $getClass = new $class;
+            if ($hook === 'form' && $getClass instanceof CustomFormSchema) {
+                return $getClass->make();
+            }
+
+            if ($getClass instanceof CustomSchema) {
+                return $getClass->make($field);
+            }
+        }
+
+        return null;
+    }
+
+    public static function getHiddenCustomSchema(string $hook, ?FieldsContract $field = null): ?array
+    {
+        $class = BoltPlugin::getSchema($hook);
+        if ($class !== null) {
+            $getClass = new $class;
+            if ($getClass instanceof CustomSchema) {
+                return $getClass->hidden($field);
+            }
+        }
+
+        return null;
     }
 }

@@ -2,18 +2,30 @@
 
 return [
     /**
-     * set the default path for the forms' homepage.
+     * set the default domain.
      */
-    'path' => 'bolt',
+    'domain' => null,
 
     /**
-     * the middleware you want to apply on all the forms routes
-     * for example if you want to make your form for users only, add the middleware 'auth'.
+     * set the default path for the forms homepage.
+     */
+    'prefix' => 'bolt',
+
+    /*
+     * set database table prefix
+     */
+    'table-prefix' => 'bolt_',
+
+    /**
+     * the middleware you want to apply on all the blog routes
+     * for example if you want to make your blog for users only, add the middleware 'auth'.
      */
     'middleware' => ['web'],
 
     /**
-     * customize the models
+     * you can overwrite any model and use your own
+     * you can also configure the model per panel in your panel provider using:
+     * ->skyModels([ ... ])
      */
     'models' => [
         'Category' => \LaraZeus\Bolt\Models\Category::class,
@@ -24,46 +36,41 @@ return [
         'FormsStatus' => \LaraZeus\Bolt\Models\FormsStatus::class,
         'Response' => \LaraZeus\Bolt\Models\Response::class,
         'Section' => \LaraZeus\Bolt\Models\Section::class,
+        'User' => config('auth.providers.users.model'),
     ],
 
-    /**
-     * you can use the default layout as a starting point for your blog.
-     * however, if you're already using your own component, just set the path here.
-     */
-    'layout' => 'zeus::components.app',
+    'collectors' => [
+        'fields' => [
+            'path' => 'app/Zeus/Fields',
+            'namespace' => '\\App\\Zeus\\Fields\\',
+        ],
 
-    /**
-     * this will be setup the default seo site title. read more about it in 'laravel-seo'.
-     */
-    'site_title' => config('app.name', 'Laravel') . ' | Forms',
-
-    /**
-     * this will be setup the default seo site description. read more about it in 'laravel-seo'.
-     */
-    'site_description' => 'All about ' . config('app.name', 'Laravel') . ' Forms',
-
-    /**
-     * this will be setup the default seo site color theme. read more about it in 'laravel-seo'.
-     */
-    'site_color' => '#F5F5F4',
-
-    'uploads' => [
-        'disk' => 'public',
-        'directory' => 'logos',
+        'dataSources' => [
+            'path' => 'app/Zeus/DataSources',
+            'namespace' => 'App\\Zeus\\DataSources\\',
+        ],
     ],
 
-    /**
-     * the default theme, for now we only have one theme, and soon we will provide more free and premium themes.
-     */
-    'theme' => 'zeus',
+    'defaultMailable' => \LaraZeus\Bolt\Mail\FormSubmission::class,
+
+    'uploadDisk' => 'public',
+
+    'uploadDirectory' => 'forms',
+
+    'uploadVisibility' => 'public',
+
+    'show_presets' => false,
+
+    'allow_design' => false,
 
     /**
-     * available locales, this currently used only in tags manager.
+     * since `collections` or 'data sources' have many types, we cannot lazy load them
+     * but we cache them for a while to get better performance
+     * the key is: dataSource_*_response_md5
+     *
+     * here you can set the duration of the cache
      */
-    'translatable_Locales' => ['en', 'ar'],
-
-    /**
-     * Navigation Group Label
-     */
-    'navigation_group_label' => 'Bolt',
+    'cache' => [
+        'collection_values' => 30, // on seconds
+    ],
 ];

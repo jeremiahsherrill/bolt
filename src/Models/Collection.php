@@ -2,48 +2,58 @@
 
 namespace LaraZeus\Bolt\Models;
 
-use Database\Factories\CollectionFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LaraZeus\Bolt\Concerns\HasUpdates;
+use LaraZeus\Bolt\Database\Factories\CollectionFactory;
 
+/**
+ * @property string $updated_at
+ * @property array $values
+ */
 class Collection extends Model
 {
-    use SoftDeletes;
     use HasFactory;
     use HasUpdates;
+    use SoftDeletes;
 
-    protected $fillable = ['name', 'values', 'user_id'];
+    protected $guarded = [];
 
     protected $casts = [
-        'values' => 'array',
+        'values' => 'collection',
     ];
 
-    public function getValuesListAttribute($value)
+    public function getTable()
     {
-        $someValues = '';
-        $someValuesCount = 0;
-        if ($this->values !== null) {
-            $allValues = collect($this->values);
-            $someValuesCount = $allValues->count();
-            $someValues = $allValues->take(5)
-                ->map(function ($item) {
-                    return $item['itemValue'] = '<span class="tager text-xs text-gray-700 font-semibold px-1.5 py-0.5 rounded-md">' . $item['itemValue'] . '</span>';
-                })
-                ->join(' ');
-        }
-        $more = ($someValuesCount > 5) ? '...' : '';
-
-        return $someValues . $more;
+        return config('zeus-bolt.table-prefix') . 'collections';
     }
 
-    protected static function newFactory()
+    public function getValuesListAttribute(): ?string
+    {
+        $allValues = collect($this->values);
+
+        if ($allValues->isNotEmpty()) {
+            return $allValues
+                ->take(5)
+                ->map(function ($item) {
+                    return $item['itemValue'] ?? null;
+                })
+                ->join(',');
+        }
+
+        return null;
+    }
+
+    protected static function newFactory(): Factory
     {
         return CollectionFactory::new();
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model'));
+        return $this->belongsTo(config('zeus-bolt.models.User') ?? config('auth.providers.users.model'));
     }
 }

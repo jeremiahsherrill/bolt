@@ -2,46 +2,72 @@
 
 namespace LaraZeus\Bolt\Filament\Resources\FormResource\Widgets;
 
-use Filament\Widgets\LineChartWidget;
-use Illuminate\Database\Eloquent\Model;
-use LaraZeus\Bolt\Models\Response;
+use Filament\Widgets\ChartWidget;
+use Flowframe\Trend\Trend;
+use Flowframe\Trend\TrendValue;
+use LaraZeus\Bolt\BoltPlugin;
+use LaraZeus\Bolt\Models\Form;
 
-class ResponsesPerMonth extends LineChartWidget
+class ResponsesPerMonth extends ChartWidget
 {
-    public ?Model $record = null;
+    public Form $record;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int | string | array $columnSpan = 'full';
 
     protected static ?string $maxHeight = '300px';
 
-    protected function getHeading(): string
+    public ?string $filter = 'per_day';
+
+    protected function getType(): string
+    {
+        return 'line';
+    }
+
+    protected function getFilters(): ?array
+    {
+        return [
+            'per_day' => __('Per Day'),
+            'per_month' => __('Per month'),
+            'per_year' => __('Per year'),
+        ];
+    }
+
+    public function getHeading(): string
     {
         return __('Responses Count');
     }
 
     protected function getData(): array
     {
-        if ($this->record === null) {
-            return [];
+        $label = null;
+
+        $data = Trend::model(BoltPlugin::getModel('Response'))
+            ->between(
+                start: now()->startOfYear(),
+                end: now()->endOfYear(),
+            );
+
+        if ($this->filter == 'per_day') {
+            $label = __('Per day');
+            $data = $data->perDay();
+        } elseif ($this->filter == 'per_month') {
+            $label = __('Per month');
+            $data = $data->perMonth();
+        } elseif ($this->filter == 'per_year') {
+            $label = __('Per year');
+            $data = $data->perYear();
         }
 
-        for ($m = 1; $m <= 12; $m++) {
-            $month = date('m', mktime(0, 0, 0, $m, 1, now()->format('Y')));
-            $dataset[] = Response::query()
-                ->where('form_id', $this->record->id)
-                ->whereYear('created_at', '=', now()->format('Y'))
-                ->whereMonth('created_at', '=', $month)
-                ->count();
-        }
+        $data = $data->count();
 
         return [
             'datasets' => [
                 [
-                    'label' => __('entries per month'),
-                    'data' => $dataset,
+                    'label' => $label,
+                    'data' => $data->map(fn (TrendValue $value) => $value->aggregate),
                 ],
             ],
-            'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            'labels' => $data->map(fn (TrendValue $value) => $value->date),
         ];
     }
 }

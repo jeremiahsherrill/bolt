@@ -2,51 +2,71 @@
 
 namespace LaraZeus\Bolt\Models;
 
-use Database\Factories\FieldFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LaraZeus\Bolt\Database\Factories\FieldFactory;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property string $name
+ * @property string $description
+ * @property string $updated_at
+ * @property string $type
+ * @property int $id
+ * @property array $options
+ */
 class Field extends Model
 {
-    use SoftDeletes;
     use HasFactory;
     use HasTranslations;
+    use SoftDeletes;
 
-    public $translatable = ['name'];
+    public array $translatable = ['name'];
 
     protected $guarded = [];
 
     protected $casts = [
         'options' => 'array',
-        'rules' => 'array',
     ];
 
-    public function getAllRulesAttribute()
+    public function getTable()
     {
-        return collect($this->rules)->transform(function ($item) {
-            return $item['rule'];
-        })->join(' ');
+        return config('zeus-bolt.table-prefix') . 'fields';
     }
 
-    protected static function newFactory()
+    protected static function booted(): void
+    {
+        static::deleting(function (Field $field) {
+            if ($field->isForceDeleting()) {
+                $field->fieldResponses()->withTrashed()->get()->each(function ($item) {
+                    $item->forceDelete();
+                });
+            } else {
+                $field->fieldResponses->each(function ($item) {
+                    $item->delete();
+                });
+            }
+        });
+    }
+
+    protected static function newFactory(): Factory
     {
         return FieldFactory::new();
     }
 
-    public function form()
+    /** @return BelongsTo<Section, Field> */
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(config('zeus-bolt.models.Form'));
+        return $this->belongsTo(config('zeus-bolt.models.Section'));
     }
 
-    public function section()
+    /** @return HasMany<FieldResponse> */
+    public function fieldResponses(): HasMany
     {
-        return $this->belongsToMany(config('zeus-bolt.models.Section'));
-    }
-
-    public function fieldResponses()
-    {
-        return $this->hasOne(config('zeus-bolt.models.FieldResponse'));
+        return $this->hasMany(config('zeus-bolt.models.FieldResponse'));
     }
 }

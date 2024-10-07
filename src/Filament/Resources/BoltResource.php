@@ -4,18 +4,25 @@ namespace LaraZeus\Bolt\Filament\Resources;
 
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
+use LaraZeus\Bolt\BoltPlugin;
 
 class BoltResource extends Resource
 {
     use Translatable;
 
-    public static function getTranslatableLocales(): array
+    public static function canViewAny(): bool
     {
-        return config('zeus-bolt.translatable_Locales');
+        return ! in_array(static::class, BoltPlugin::get()->getHiddenResources())
+            && parent::canViewAny();
     }
 
-    protected static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): ?string
     {
-        return __(config('zeus-bolt.navigation_group_label', 'Bolt'));
+        return BoltPlugin::get()->getNavigationGroupLabel();
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return BoltPlugin::get()->getGlobalAttributes(static::class);
     }
 }

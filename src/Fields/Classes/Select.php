@@ -2,13 +2,18 @@
 
 namespace LaraZeus\Bolt\Fields\Classes;
 
-use Filament\Forms\Components\Select as FilamentSelect;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Toggle;
+use LaraZeus\Accordion\Forms\Accordion;
+use LaraZeus\Accordion\Forms\Accordions;
+use LaraZeus\Bolt\Facades\Bolt;
 use LaraZeus\Bolt\Fields\FieldsContract;
+use LaraZeus\Bolt\Models\Field;
+use LaraZeus\Bolt\Models\FieldResponse;
 
 class Select extends FieldsContract
 {
-    public string $renderClass = '\Filament\Forms\Components\Select';
+    public string $renderClass = \Filament\Forms\Components\Select::class;
 
     public int $sort = 2;
 
@@ -17,47 +22,86 @@ class Select extends FieldsContract
         return __('Select Menu');
     }
 
-    public static function getOptions(): array
+    public function icon(): string
+    {
+        return 'tabler-selector';
+    }
+
+    public function description(): string
+    {
+        return __('select single or multiple items from a dropdown list');
+    }
+
+    public static function getOptions(?array $sections = null, ?array $field = null): array
     {
         return [
-            FilamentSelect::make('options.dataSource')->required()->options(config('zeus-bolt.models.Collection')::pluck('name', 'id'))->label(__('Data Source'))->columnSpan(2),
-            Toggle::make('options.is_required')->label(__('Is Required')),
-            \Filament\Forms\Components\TextInput::make('options.htmlId')
-                ->default(str()->random(6))
-                ->label(__('HTML ID')),
+            self::dataSource(),
+            Toggle::make('options.allow_multiple')->label(__('Allow Multiple')),
+            Accordions::make('options')
+                ->activeAccordion(1)
+                ->accordions([
+                    Accordion::make('general-options')
+                        ->label(__('General Options'))
+                        ->icon('iconpark-checklist-o')
+                        ->columns()
+                        ->schema([
+                            self::required(),
+                            self::columnSpanFull(),
+                            self::htmlID(),
+                        ]),
+                    self::hintOptions(),
+                    self::visibility($sections),
+                    // @phpstan-ignore-next-line
+                    ...Bolt::hasPro() ? \LaraZeus\BoltPro\Facades\GradeOptions::schema($field) : [],
+                    Bolt::getCustomSchema('field', resolve(static::class)) ?? [],
+                ]),
         ];
     }
 
-    public function getResponse($field, $resp): string
+    public static function getOptionsHidden(): array
     {
-        if (empty($resp->response)) {
-            return '';
-        }
-
-        $collection = config('zeus-bolt.models.Collection')::find($field->options['dataSource']);
-        if ($collection === null) {
-            return $resp->response;
-        }
-
-        $getResponFromCollection = collect($collection->values)->where('itemKey', $resp->response)->first();
-
-        if ($getResponFromCollection === null) {
-            return $resp->response;
-        }
-
-        if (! isset($getResponFromCollection['itemValue'])) {
-            return $resp->response;
-        }
-
-        return $getResponFromCollection['itemValue'];
+        return [
+            // @phpstan-ignore-next-line
+            Bolt::hasPro() ? \LaraZeus\BoltPro\Facades\GradeOptions::hidden() : [],
+            ...Bolt::getHiddenCustomSchema('field', resolve(static::class)) ?? [],
+            self::hiddenVisibility(),
+            self::hiddenHtmlID(),
+            self::hiddenHintOptions(),
+            self::hiddenRequired(),
+            self::hiddenColumnSpanFull(),
+            Hidden::make('options.dataSource'),
+            Hidden::make('options.allow_multiple')->default(false),
+        ];
     }
 
-    public function appendFilamentComponentsOptions($component, $zeusField)
+    public function getResponse(Field $field, FieldResponse $resp): string
     {
-        parent::appendFilamentComponentsOptions($component, $zeusField);
+        return $this->getCollectionsValuesForResponse($field, $resp);
+    }
 
-        return $component
+    // @phpstan-ignore-next-line
+    public function appendFilamentComponentsOptions($component, $zeusField, bool $hasVisibility = false)
+    {
+        parent::appendFilamentComponentsOptions($component, $zeusField, $hasVisibility);
+
+        $options = FieldsContract::getFieldCollectionItemsList($zeusField);
+
+        $component = $component
             ->searchable()
-            ->options(collect(\optional(config('zeus-bolt.models.Collection')::find($zeusField->options['dataSource']))->values)->pluck('itemValue', 'itemKey'));
+            ->preload()
+            ->options($options);
+
+        if (isset($zeusField->options['allow_multiple']) && $zeusField->options['allow_multiple']) {
+            $component = $component->multiple();
+        }
+
+        if (request()->filled($zeusField->options['htmlId'])) {
+            $component = $component->default(request($zeusField->options['htmlId']));
+            //todo set default items for datasources
+        } elseif ($selected = $options->where('itemIsDefault', true)->pluck('itemKey')->isNotEmpty()) {
+            $component = $component->default($selected);
+        }
+
+        return $component->live();
     }
 }

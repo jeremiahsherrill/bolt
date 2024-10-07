@@ -1,19 +1,31 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use LaraZeus\Bolt\Http\Livewire\FillForms;
-use LaraZeus\Bolt\Http\Livewire\ListEntries;
-use LaraZeus\Bolt\Http\Livewire\ListForms;
-use LaraZeus\Bolt\Http\Livewire\ShowEntry;
-use LaraZeus\Bolt\Http\Livewire\Submitted;
+use LaraZeus\Bolt\Livewire\FillForms;
+use LaraZeus\Bolt\Livewire\ListEntries;
+use LaraZeus\Bolt\Livewire\ListForms;
+use LaraZeus\Bolt\Livewire\ShowEntry;
 
-Route::prefix(config('zeus-bolt.path'))
+Route::domain(config('zeus-bolt.domain'))
+    ->prefix(config('zeus-bolt.prefix'))
     ->name('bolt.')
     ->middleware(config('zeus-bolt.middleware'))
     ->group(function () {
-        Route::get('/', ListForms::class)->name('forms.list');
-        Route::get('submitted/{slug}', Submitted::class)->name('submitted');
-        Route::get('/entries', ListEntries::class)->name('entries.list')->middleware('auth');
-        Route::get('/entry/{responseID}', ShowEntry::class)->name('entry.show')->middleware('auth');
-        Route::get('{slug}/{itemSlug?}', FillForms::class)->name('form.show');
+        Route::get('/', ListForms::class)
+            ->name('forms.list');
+
+        Route::get('/entries', ListEntries::class)->name('entries.list')
+            ->middleware('auth');
+
+        Route::get('/entry/{responseID}', ShowEntry::class)
+            ->name('entry.show')
+            ->middleware('auth');
+
+        if (class_exists(\LaraZeus\BoltPro\BoltProServiceProvider::class)) {
+            Route::get('embed/{slug}', \LaraZeus\BoltPro\Livewire\EmbedForm::class)
+                ->name('form.embed');
+        }
+
+        Route::get('{slug}/{extensionSlug?}', FillForms::class)
+            ->name('form.show');
     });
